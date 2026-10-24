@@ -1,0 +1,42 @@
+name: trading-terminal-ci
+
+on:
+  push:
+    branches:
+      - "feature/**"
+    paths:
+      - "trading-terminal/**"
+      - ".github/workflows/trading-terminal-ci.yml"
+  pull_request:
+    paths:
+      - "trading-terminal/**"
+      - ".github/workflows/trading-terminal-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: trading-terminal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: trading-terminal/pyproject.toml
+      - name: Show Python version
+        run: python --version
+      - name: Install project and development dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Run tests
+        run: pytest
+      - name: Lint
+        run: ruff check src tests
