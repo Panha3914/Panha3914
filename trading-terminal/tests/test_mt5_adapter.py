@@ -141,3 +141,25 @@ def test_closed_bars_reject_unsupported_timeframe() -> None:
     adapter = MT5ReadOnlyAdapter(mt5_module=FakeMT5())
     with pytest.raises(ValueError, match="unsupported timeframe"):
         adapter.get_closed_bars("XAUUSD", timeframe="M7", count=20)
+
+
+
+def test_terminal_path_strips_wrapping_quotes() -> None:
+    adapter = MT5ReadOnlyAdapter(
+        terminal_path='"C:\\\\Program Files\\\\MetaTrader 5\\\\terminal64.exe"',
+        mt5_module=FakeMT5(),
+    )
+    assert adapter.terminal_path == "C:\\\\Program Files\\\\MetaTrader 5\\\\terminal64.exe"
+
+
+def test_blank_terminal_path_enables_auto_discovery() -> None:
+    adapter = MT5ReadOnlyAdapter(terminal_path='  ""  ', mt5_module=FakeMT5())
+    assert adapter.terminal_path is None
+
+
+def test_missing_terminal_path_gets_actionable_error(tmp_path) -> None:
+    fake = FakeMT5()
+    fake.connected = False
+    adapter = MT5ReadOnlyAdapter(terminal_path=str(tmp_path / "missing-terminal64.exe"), mt5_module=fake)
+    with pytest.raises(MT5AdapterError, match="Set MT5_PATH blank"):
+        adapter.connect()
