@@ -19,7 +19,7 @@ A Windows-friendly Python Textual terminal for MT5 **read-only** market/account 
 
 ## Windows setup
 
-Prerequisites: Windows 10/11 or Windows Server, Python 3.12 x64, and network access for package installation.
+Prerequisites: Windows 10/11 or Windows Server, Python 3.12 or 3.13 (64-bit), and network access for package installation. The installer tries Python 3.13, then 3.12, then a compatible `python` command on PATH.
 
 1. Open the `trading-terminal` directory in this repository.
 2. Run `INSTALL_WINDOWS.bat` once.
@@ -61,6 +61,8 @@ pytest
 ruff check src tests
 python -m trading_terminal.app
 ```
+
+CI tests both Python 3.12 and Python 3.13. The optional MetaTrader5 package publishes Windows x64 wheels for CPython 3.13 as well as 3.12; actual terminal/broker connectivity must still be tested on the target machine.
 
 For optional Windows integrations:
 ```powershell
