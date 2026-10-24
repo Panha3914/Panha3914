@@ -9,6 +9,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from trading_terminal.domain.models import MarketBar, Quote
@@ -73,7 +74,14 @@ class MT5ReadOnlyAdapter:
     ) -> None:
         if timeout_seconds < 1:
             raise ValueError("timeout_seconds must be positive")
-        self.terminal_path = terminal_path
+        normalized_path = (terminal_path or "").strip()
+        if (
+            len(normalized_path) >= 2
+            and normalized_path[0] == normalized_path[-1]
+            and normalized_path[0] in {"\\", '"', "'"}
+        ):
+            normalized_path = normalized_path[1:-1].strip()
+        self.terminal_path = normalized_path or None
         self.timeout_seconds = timeout_seconds
         self._mt5 = mt5_module
         self._owns_session = False
@@ -95,7 +103,14 @@ class MT5ReadOnlyAdapter:
             return
         kwargs: dict[str, object] = {"timeout": self.timeout_seconds * 1000}
         if self.terminal_path:
-            kwargs["path"] = self.terminal_path
+            executable = Path(self.terminal_path)
+            if not executable.is_file():
+                raise MT5AdapterError(
+                    f"Configured MT5_PATH does not exist: {self.terminal_path}. "
+                    "Set MT5_PATH blank to let MetaTrader5 locate the terminal automatically, "
+                    "or copy the real terminal64.exe path from the MT5 shortcut properties."
+                )
+            kwargs["path"] = str(executable)
         if not mt5.initialize(**kwargs):
             raise MT5AdapterError(f"MT5 initialize failed: {mt5.last_error()}")
         self._owns_session = True
